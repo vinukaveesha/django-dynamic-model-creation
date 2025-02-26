@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ model_name }} Records</title>
+</head>
+<body>
+    <h1>{{ model_name }} Records</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                {% for field in objects.first.get_fields %}
+                    <th>{{ field.name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for object in objects %}
+                <tr>
+                    {% for field in object.get_fields %}
+                        <td>{{ field.value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
