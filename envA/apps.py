@@ -1,6 +1,4 @@
-# apps.py
 from django.apps import AppConfig
-import threading
 
 class EnvaConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
@@ -10,8 +8,8 @@ class EnvaConfig(AppConfig):
         from .models import create_dynamic_model
 
         db_configs = {
-            'default': ['public.vet_specialties']
-            # 'oracle': ['PH_PHARMACY.BRAND_MAPPING_TRACKER']
+            'default': ['public.owners'],
+            'oracle': ['PH_PHARMACY.PHBAS_INVENTORY']
         }
 
         for db_alias, tables in db_configs.items():

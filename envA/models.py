@@ -1,6 +1,8 @@
 from django.db import connections, models
 from django.contrib import admin
 from .admin import register_dynamic_model
+from django.core.exceptions import ImproperlyConfigured
+from django.apps import apps
 
 def create_dynamic_model(table_name, db_alias):
     
@@ -111,7 +113,10 @@ def create_dynamic_model(table_name, db_alias):
     DynamicModel = type(model_name, (models.Model,), fields)
 
     # Register the dynamic model with the admin
-    register_dynamic_model(DynamicModel)
+    if DynamicModel:
+        if not apps.is_installed('envA'):
+            raise ImproperlyConfigured("The 'envA' app must be installed to use this functionality")
+        register_dynamic_model(DynamicModel)
 
     #admin.site.register(DynamicModel)
 

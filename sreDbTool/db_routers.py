@@ -25,13 +25,13 @@ class MultiDBRouter:
     def db_for_read(self, model, **hints):
         """Directs reads to PostgreSQL by default unless specified."""
         if model._meta.app_label == 'envA':
-            return 'default'  # Prioritizing PostgreSQL
+            return 'oracle'  
         return None
 
     def db_for_write(self, model, **hints):
         """Directs writes to PostgreSQL by default unless specified."""
         if model._meta.app_label == 'envA':
-            return 'default'  # Prioritizing PostgreSQL
+            return 'oracle'
         return None
 
     def allow_relation(self, obj1, obj2, **hints):
@@ -39,8 +39,7 @@ class MultiDBRouter:
         return obj1._state.db == obj2._state.db
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        """Allow migrations only on PostgreSQL for envA models."""
         if app_label == 'envA':
-            return db == 'default'  # Apply migrations only to PostgreSQL
-        return None
+            return db == 'oracle'
+        return db == 'default'
 
