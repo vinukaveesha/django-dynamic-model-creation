@@ -26,11 +26,14 @@ def create_dynamic_model(table_name, db_alias):
         if db_alias == 'oracle':
             cursor.execute(f'SELECT * FROM "{schema_part}"."{table_part}"')
             
-        else:
+        elif db_alias == 'postgresql':
             if schema_part:
                 cursor.execute(f'SELECT * FROM "{schema_part}"."{table_part}"')  
             else:
                 cursor.execute(f"SELECT * FROM '{table_part}'")
+
+        else:
+            cursor.execute(f"SELECT * FROM {table_part}")
 
         columns = [col[0] for col in cursor.description]
 
@@ -91,22 +94,23 @@ def create_dynamic_model(table_name, db_alias):
     def get_fields(cls):
         return [{'name': f.name, 'type': type(f).__name__, 'default': f.default if hasattr(f, 'default') else None} for f in cls._meta.fields]
 
+
+    def list_methods(cls):
+        return [func for func in dir(cls) if callable(getattr(cls, func)) and not func.startswith("__")]
+    
+    # Class methods to retrieve model's metadata
     def get_meta_options(cls):
         return {
             'db_table': cls._meta.db_table,
             'managed': cls._meta.managed,
             'app_label': cls._meta.app_label,
             'model_name': cls._meta.model_name,
-            'verbose_name': cls._meta.verbose_name,
+            'verbose_name': cls._meta.verbose_name if hasattr(cls._meta, 'verbose_name') else cls._meta.model_name,
         }
-
-    def list_methods(cls):
-        return [func for func in dir(cls) if callable(getattr(cls, func)) and not func.startswith("__")]
 
     fields['get_fields'] = classmethod(get_fields)
     fields['get_meta_options'] = classmethod(get_meta_options)
     fields['list_methods'] = classmethod(list_methods)
-
 
     # Create dynamic model
     model_name = table_part.replace(' ', '_').replace('.', '_').capitalize()

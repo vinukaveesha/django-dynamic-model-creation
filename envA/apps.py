@@ -8,7 +8,7 @@ class EnvaConfig(AppConfig):
         from .models import create_dynamic_model
 
         db_configs = {
-            'default': ['public.owners'],
+            'postgresql': ['public.owners'],
             'oracle': ['PH_PHARMACY.PHBAS_INVENTORY']
         }
 
