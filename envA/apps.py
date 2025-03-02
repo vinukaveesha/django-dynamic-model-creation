@@ -5,17 +5,13 @@ class EnvaConfig(AppConfig):
     name = 'envA'
 
     def ready(self):
-        from .models import create_dynamic_model
+        from .models import create_dynamic_model, create_all_dynamic_models
 
         db_configs = {
-            'postgresql': ['public.owners'],
-            'oracle': ['PH_PHARMACY.PHBAS_INVENTORY']
+            'postgresql': ['empi']
+            # 'oracle': ['PH_PHARMACY']
         }
 
-        for db_alias, tables in db_configs.items():
-            for table in tables:
-                try:
-                    dynamic_model = create_dynamic_model(table, db_alias)
-                    print("Model created :",dynamic_model.get_fields())
-                except Exception as e:
-                    print(f"Error creating model for {table} in {db_alias}: {e}")
+        for db_alias, schemas in db_configs.items():
+            for schema in schemas:
+                create_all_dynamic_models(db_alias, schema)

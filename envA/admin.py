@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings
 
 def get_database_for_model(model):
-    if 'public' in model._meta.db_table:
+    if 'empi' in model._meta.db_table:
         return 'postgresql'
     else:
         return 'oracle'

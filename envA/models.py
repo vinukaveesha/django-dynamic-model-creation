@@ -3,6 +3,35 @@ from django.contrib import admin
 from .admin import register_dynamic_model
 from django.core.exceptions import ImproperlyConfigured
 from django.apps import apps
+import logging
+
+# Get the logger specified in settings
+logger = logging.getLogger('model_creation_logger')
+
+def create_all_dynamic_models(db_alias, schema_name):
+    connection = connections[db_alias]
+    tables = []
+
+    with connection.cursor() as cursor:
+        if db_alias == 'oracle':
+            cursor.execute(f"SELECT table_name FROM all_tables WHERE owner = '{schema_name}'")
+        else: 
+            cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema_name}'")
+
+        tables = [row[0] for row in cursor.fetchall()]
+
+    for table_name in tables:
+        logger.debug(f"Starting model creation for table {table_name} on database {db_alias}")
+        full_table_name = f"{schema_name}.{table_name}"
+        try:
+            dynamic_model = create_dynamic_model(full_table_name, db_alias)
+            if dynamic_model:
+                logger.debug(f"Model created: {dynamic_model.__name__}")
+                print(f"Model created: {dynamic_model.__name__}")
+        except Exception as e:
+            logger.error(f"Error creating model for {full_table_name} in {db_alias}: {e}")
+            print(f"Error creating model for {full_table_name} in {db_alias}: {e}")
+
 
 def create_dynamic_model(table_name, db_alias):
     
@@ -16,10 +45,10 @@ def create_dynamic_model(table_name, db_alias):
     connection = connections[db_alias]
 
     with connection.cursor() as cursor:
-        if connection.connection:
-            print(f"Database '{db_alias}' is connected.")
-        else:
-            print(f"Database '{db_alias}' is NOT connected.")
+        # if connection.connection:
+        #     print(f"Database '{db_alias}' is connected.")
+        # else:
+        #     print(f"Database '{db_alias}' is NOT connected.")
 
 
         # Get columns
@@ -37,10 +66,10 @@ def create_dynamic_model(table_name, db_alias):
 
         columns = [col[0] for col in cursor.description]
 
-        # Check if table exists
-        if not cursor.fetchone():
-            print(f"Skipping: Table {table_name} does not exist in {db_alias}")
-            return None
+        # # Check if table exists
+        # if not cursor.fetchone():
+        #     print(f"Skipping: Table {table_name} does not exist in {db_alias}")
+        #     return None
 
         # Detect primary key
         pk_columns = []
@@ -70,6 +99,7 @@ def create_dynamic_model(table_name, db_alias):
         primary_key = pk_columns[0] if pk_columns else None
 
         print(f"Primary key: {primary_key}")
+        logger.debug(f"Primary key: {primary_key}")
 
     # Prepare fields for the dynamic model
     fields = {
@@ -80,6 +110,12 @@ def create_dynamic_model(table_name, db_alias):
             'app_label': 'envA'
         }),
     }
+
+    if primary_key == None and "id" in columns:
+        primary_key = "id"
+    # elif primary_key == None:
+    #     logger.error(f"No primary key found for {table_name}")
+    #     raise Exception(f"No primary key found for {table_name}")
 
     for column in columns:
         if column == primary_key:
@@ -120,6 +156,10 @@ def create_dynamic_model(table_name, db_alias):
     if DynamicModel:
         if not apps.is_installed('envA'):
             raise ImproperlyConfigured("The 'envA' app must be installed to use this functionality")
+        print(DynamicModel.get_fields())
+        logger.debug(DynamicModel.get_fields())
+        print()
+        print()
         register_dynamic_model(DynamicModel)
 
     #admin.site.register(DynamicModel)

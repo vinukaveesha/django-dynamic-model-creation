@@ -128,13 +128,13 @@ DATABASES = {
     },
     'postgresql': {
         'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': env('DB_NAME', default='petclinicdb'),
-        'USER': env('DB_USER', default='postgres'),
-        'PASSWORD': env('DB_PASSWORD', default=''),
-        'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='5432'),
+        'NAME': env('DEV_DB_NAME'),
+        'USER': env('DEV_DB_USER'),
+        'PASSWORD': env('DEV_DB_PASSWORD', default=''),
+        'HOST': env('DEV_DB_HOST', default='localhost'),
+        'PORT': env('DEV_DB_PORT', default='5432'),
         'OPTIONS': {
-            'options': f"-c search_path={env('DB_SCHEMA', default='public')}"
+            'options': f"-c search_path={env('DEV_DB_SCHEMA', default='empi')}"
         }
     },
     'oracle': {
@@ -142,7 +142,7 @@ DATABASES = {
         'NAME': env('ORACLE_NAME', default=''),
         'USER': env('ORACLE_USER', default=''),
         'PASSWORD': env('ORACLE_PASSWORD', default=''),
-    }
+    },
 }
 
 
@@ -151,15 +151,29 @@ DATABASE_ROUTERS = ['sreDbTool.db_routers.MultiDBRouter']
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    'formatters': {
+        'detailed': {
+            'format': '{asctime} {levelname} {message}',
+            'style': '{',
         },
     },
-    'loggers': {
-        'django.db.backends': {
-            'handlers': ['console'],
+    'handlers': {
+        'file': {
             'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'model_creation.log',
+            'maxBytes': 1024*1024*5, 
+            'backupCount': 5,
+            'formatter': 'detailed',
+        },
+    },
+
+    'loggers': {
+        'model_creation_logger': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
+
