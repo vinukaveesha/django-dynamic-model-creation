@@ -1,5 +1,4 @@
 from django.db import connections, models
-from django.contrib import admin
 from .admin import register_dynamic_model
 from django.core.exceptions import ImproperlyConfigured
 from django.apps import apps
@@ -66,11 +65,6 @@ def create_dynamic_model(table_name, db_alias):
 
         columns = [col[0] for col in cursor.description]
 
-        # # Check if table exists
-        # if not cursor.fetchone():
-        #     print(f"Skipping: Table {table_name} does not exist in {db_alias}")
-        #     return None
-
         # Detect primary key
         pk_columns = []
         if db_alias == 'oracle':
@@ -113,9 +107,6 @@ def create_dynamic_model(table_name, db_alias):
 
     if primary_key == None and "id" in columns:
         primary_key = "id"
-    # elif primary_key == None:
-    #     logger.error(f"No primary key found for {table_name}")
-    #     raise Exception(f"No primary key found for {table_name}")
 
     for column in columns:
         if column == primary_key:

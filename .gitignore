@@ -1,2 +1,3 @@
 .env
 model_creation.log
+envA/migrations/0001_initial.py
