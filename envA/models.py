@@ -6,53 +6,33 @@ import logging
 
 # Get the logger specified in settings
 logger = logging.getLogger('model_creation_logger')
-    
-def fetch_schemas(connection):
-    exclude_schemas = "'information_schema', 'pg_catalog','pg_temp','pg_toast','pg_toast_temp','sys', 'system'"
-    if 'oracle' in connection.settings_dict['ENGINE']:
-        query = f"SELECT username FROM all_users WHERE username NOT IN ({exclude_schemas})"
-    else:
-        query = f"SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ({exclude_schemas})"
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        return [row[0] for row in cursor.fetchall()]
 
-
-def create_all_dynamic_models(db_alias):
+def create_all_dynamic_models(db_alias, schema_name):
     connection = connections[db_alias]
-    database_name = connection.settings_dict['NAME']
+    tables = []
 
-    schemas = fetch_schemas(connection)
+    with connection.cursor() as cursor:
+        if db_alias == 'oracle':
+            cursor.execute(f"SELECT table_name FROM all_tables WHERE owner = '{schema_name}'")
+        else: 
+            cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema_name}'")
 
-    print("Schemas ->", schemas)
+        tables = [row[0] for row in cursor.fetchall()]
 
-    for schema_name in schemas:
-        logger.debug(f"Creating models for schema {schema_name} on database {database_name}")
-        print(f"--------  Creating models for schema {schema_name} on database {database_name} ----------")
-        tables = []
-
-        with connection.cursor() as cursor:
-            if db_alias == 'oracle':
-                cursor.execute(f"SELECT table_name FROM all_tables WHERE owner = '{schema_name}'")
-            else: 
-                cursor.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema_name}'")
-
-            tables = [row[0] for row in cursor.fetchall()]
-
-        for table_name in tables:
-            logger.debug(f"Starting model creation for table {table_name} on schema {schema_name}")
-            full_table_name = f"{schema_name}.{table_name}"
-            try:
-                dynamic_model = create_dynamic_model(full_table_name, db_alias, database_name)
-                if dynamic_model:
-                    logger.debug(f"Model created: {dynamic_model.__name__}")
-                    print(f"Model created: {dynamic_model.__name__}")
-            except Exception as e:
-                logger.error(f"Error creating model for {full_table_name} in {db_alias}: {e}")
-                print(f"Error creating model for {full_table_name} in {db_alias}: {e}") 
+    for table_name in tables:
+        logger.debug(f"Starting model creation for table {table_name} on database {db_alias}")
+        full_table_name = f"{schema_name}.{table_name}"
+        try:
+            dynamic_model = create_dynamic_model(full_table_name, db_alias)
+            if dynamic_model:
+                logger.debug(f"Model created: {dynamic_model.__name__}")
+                print(f"Model created: {dynamic_model.__name__}")
+        except Exception as e:
+            logger.error(f"Error creating model for {full_table_name} in {db_alias}: {e}")
+            print(f"Error creating model for {full_table_name} in {db_alias}: {e}")
 
 
-def create_dynamic_model(table_name, db_alias, database_name):
+def create_dynamic_model(table_name, db_alias):
     
     # Split schema and table name
     if '.' in table_name:
@@ -171,7 +151,7 @@ def create_dynamic_model(table_name, db_alias, database_name):
         logger.debug(DynamicModel.get_fields())
         print()
         print()
-        register_dynamic_model(DynamicModel,database_name)
+        register_dynamic_model(DynamicModel)
 
     #admin.site.register(DynamicModel)
 

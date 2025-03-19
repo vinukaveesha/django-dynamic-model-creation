@@ -5,9 +5,13 @@ class EnvaConfig(AppConfig):
     name = 'envA'
 
     def ready(self):
-        from .models import create_all_dynamic_models
+        from .models import create_dynamic_model, create_all_dynamic_models
 
-        db_configs = ['postgresql']
+        db_configs = {
+            'postgresql': ['empi']
+            # 'oracle': ['PH_PHARMACY']
+        }
 
-        for db_alias in db_configs:
-            create_all_dynamic_models(db_alias)
+        for db_alias, schemas in db_configs.items():
+            for schema in schemas:
+                create_all_dynamic_models(db_alias, schema)
